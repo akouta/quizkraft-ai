@@ -1,0 +1,9 @@
+[
+  {
+    "origin": ["https://quizcraft-3aee1.web.app", "https://quizkraft.com"],
+    "method": ["GET", "POST", "PUT", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]
+

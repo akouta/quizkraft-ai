@@ -1,0 +1,50 @@
+# Node.js (frontend)
+node_modules/
+npm-debug.log*
+
+# Python (backend)
+backend/venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.pyc
+*.pyo
+
+# General environment files
+.env
+*.env
+
+# IDE and system files
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Build output
+dist/
+build/
+
+# Dynamic or temporary uploads
+backend/uploads/
+backend/uploads/*
+
+# Exported files
+backend/exports/
+backend/exports/*
+
+# Service Account Key
+/backend/credentials.json
+
+# Compiled assets
+*.so
+
+.firebase/
+.runtimeconfig.json
+coverage/
+
+# Firebase-specific metadata/cache
+.firebase
+.firebaserc
+

@@ -1,0 +1,80 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #4caf50;
+  color: white;
+  padding: 20px;
+}
+
+main {
+  padding-bottom: 200px;
+}
+
+footer {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.navbar {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #121212; /* Match dark theme background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+}
+
+.navbar button {
+  margin-left: 15px; /* Space between buttons */
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+}
+
+.navbar .profile-button {
+  background-color: #1976d2; /* Blue button */
+  color: white;
+}
+
+.navbar .profile-button:hover {
+  background-color: #1565c0; /* Darker blue on hover */
+}
+
+.navbar .history-button {
+  background-color: transparent; /* Transparent for "secondary" button */
+  color: #90caf9; /* Lighter blue for contrast */
+  border: 1px solid #90caf9; /* Light border */
+  margin-left: 15px;
+}
+
+.navbar .history-button:hover {
+  background-color: #90caf9; /* Blue background on hover */
+  color: black;
+}
+
+.navbar .logout-button {
+  background-color: #d32f2f; /* Red button */
+  color: white;
+}
+
+.navbar .logout-button:hover {
+  background-color: #b71c1c; /* Darker red on hover */
+}
