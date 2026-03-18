@@ -1,46 +1,31 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import { Alert, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase/firebaseConfig";
-import { Alert } from "@mui/material";
-
-// Handle Firebase authentication errors for logout
-const handleAuthError = (error) => {
-  const errorMessages = {
-    // In most cases, signOut doesn't throw many specific errors.
-    // You can add custom error mappings here if needed.
-  };
-
-  return (
-    errorMessages[error.code] || "An unexpected error occurred during logout."
-  );
-};
 
 const LogoutButton = () => {
   const navigate = useNavigate();
-  const [errorMsg, setErrorMsg] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogout = async () => {
-    setErrorMsg("");
+    setError("");
+
     try {
       await signOut(auth);
       navigate("/login");
-    } catch (error) {
-      setErrorMsg(handleAuthError(error));
+    } catch (logoutError) {
+      setError(logoutError.message || "Logout failed.");
     }
   };
 
   return (
-    <div>
-      <button className="logout-button" onClick={handleLogout}>
+    <>
+      <Button color="inherit" onClick={handleLogout}>
         Logout
-      </button>
-      {errorMsg && (
-        <Alert severity="error" sx={{ marginTop: 2 }}>
-          {errorMsg}
-        </Alert>
-      )}
-    </div>
+      </Button>
+      {error && <Alert severity="error">{error}</Alert>}
+    </>
   );
 };
 

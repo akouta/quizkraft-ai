@@ -1,23 +1,23 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 
 function Footer() {
   return (
     <Box
       component="footer"
       sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "60px",
+        py: 4,
+        borderTop: "1px solid",
+        borderColor: "divider",
         backgroundColor: "background.paper",
-        color: "text.secondary",
-        textAlign: "center",
       }}
     >
-      <Typography variant="body2">
-        © {new Date().getFullYear()} QuizKraft AI. All rights reserved.
-      </Typography>
+      <Container maxWidth="lg">
+        <Typography color="text.secondary" sx={{ textAlign: "center" }}>
+          QuizKraft helps STEM instructors turn owned course files into source-
+          cited drafts, learner practice links, and LMS-ready exports.
+        </Typography>
+      </Container>
     </Box>
   );
 }

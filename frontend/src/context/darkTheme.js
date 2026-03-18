@@ -3,29 +3,31 @@ import { createTheme } from "@mui/material/styles";
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
-    background: {
-      default: "#121212", // Dark background
-      paper: "#1e1e1e", // Slightly lighter for containers
-    },
-    text: {
-      primary: "#ffffff", // White text for dark mode
-      secondary: "#bbbbbb", // Light gray secondary text
-    },
     primary: {
-      main: "#90CAF9", // Accent color for buttons, links, etc.
+      main: "#38bdf8",
     },
     secondary: {
-      main: "#F48FB1",
+      main: "#fbbf24",
     },
-    divider: "#2E2E2E", // Divider color
+    background: {
+      default: "#07111f",
+      paper: "#0f172a",
+    },
+    text: {
+      primary: "#e2e8f0",
+      secondary: "#94a3b8",
+    },
+  },
+  shape: {
+    borderRadius: 20,
   },
   typography: {
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
-    body1: {
-      color: "#E0E0E0", // Default text
+    fontFamily: '"Avenir Next", "Segoe UI", sans-serif',
+    h2: {
+      letterSpacing: "-0.04em",
     },
-    body2: {
-      color: "#B0B0B0", // Secondary text
+    h3: {
+      letterSpacing: "-0.03em",
     },
   },
 });

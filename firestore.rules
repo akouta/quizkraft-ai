@@ -2,20 +2,55 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // For each user doc: /users/{userId}
-    match /users/{userId} {
-      
-      // The user's main doc (if you store profile info here)
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId
-                         && request.auth.token.email_verified == true;
+    function isVerifiedOwner(userId) {
+      return request.auth != null &&
+        request.auth.uid == userId &&
+        request.auth.token.email_verified == true;
+    }
 
-      // The "quizzes" sub-collection: /users/{userId}/quizzes/{quizId}
+    function isVerifiedUser() {
+      return request.auth != null &&
+        request.auth.token.email_verified == true;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isVerifiedOwner(userId);
+
       match /quizzes/{quizId} {
-        allow read, write: if request.auth != null
-                           && request.auth.uid == userId
-                           && request.auth.token.email_verified == true;
+        allow read, write: if isVerifiedOwner(userId);
       }
+
+      match /quizJobs/{jobId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+
+      match /practiceSessions/{sessionId} {
+        allow read, write: if isVerifiedOwner(userId);
+      }
+    }
+
+    match /publishedQuizzes/{publicQuizId} {
+      allow read: if resource.data.publicPreviewEnabled == true;
+      allow create, update, delete: if isVerifiedUser() &&
+        request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /practiceSessions/{sessionId} {
+      allow create: if request.resource.data.publicAccess == true &&
+        request.resource.data.id == sessionId &&
+        request.resource.data.status == "in_progress" &&
+        request.resource.data.ownerUid is string &&
+        request.resource.data.sourceQuizId is string &&
+        request.resource.data.publicQuizId is string;
+
+      allow read: if resource.data.publicAccess == true ||
+        (isVerifiedUser() && request.auth.uid == resource.data.ownerUid);
+
+      allow update: if resource.data.publicAccess == true &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.sourceQuizId == resource.data.sourceQuizId &&
+        request.resource.data.publicQuizId == resource.data.publicQuizId;
     }
   }
 }

@@ -17,41 +17,71 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
+
       try {
-        if (user) {
-          // Refresh the user's token to ensure we see any updated emailVerified state
-          await user.reload();
-
-          // If they have verified their email, let's ensure they have a user doc
-          if (user.emailVerified) {
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
-
-            // Only create the doc if it doesn't exist
-            if (!docSnap.exists()) {
-              // You can pass more data as needed
-              await createUserDoc(user.uid, { email: user.email });
-            }
-          }
-
-          setCurrentUser(user);
-        } else {
+        if (!user) {
           setCurrentUser(null);
+          return;
         }
-      } catch (error) {
+
+        if (user.emailVerified) {
+          await user.getIdToken(true);
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (!userDoc.exists()) {
+            await createUserDoc(user.uid, {
+              email: user.email,
+              displayName: user.displayName || "",
+            });
+          }
+        }
+
+        setCurrentUser(user);
       } finally {
         setLoading(false);
       }
     });
 
-    return unsubscribe; // Clean up the listener
+    return unsubscribe;
   }, []);
 
-  const value = { currentUser };
+  const refreshUser = async () => {
+    if (!auth.currentUser) {
+      setCurrentUser(null);
+      return null;
+    }
+
+    await auth.currentUser.reload();
+    await auth.currentUser.getIdToken(true);
+    const refreshedUser = auth.currentUser;
+    setCurrentUser(refreshedUser);
+
+    if (refreshedUser?.emailVerified) {
+      const userDocRef = doc(db, "users", refreshedUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        await createUserDoc(refreshedUser.uid, {
+          email: refreshedUser.email,
+          displayName: refreshedUser.displayName || "",
+        });
+      }
+    }
+
+    return refreshedUser;
+  };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider
+      value={{
+        currentUser,
+        isVerified: Boolean(currentUser?.emailVerified),
+        loading,
+        refreshUser,
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 }

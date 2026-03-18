@@ -1,25 +1,26 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { CssBaseline } from "@mui/material";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { CssBaseline } from "@mui/material";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./context/AppContext";
 import ThemeContextProvider from "./context/ThemeContext";
-import SignUp from "./components/Auth/SignUp";
-import Login from "./components/Auth/Login";
-import LogoutButton from "./components/Auth/LogoutButton";
-import PrivateRoute from "./components/Auth/PrivateRoute";
-import Navbar from "./components/Navbar/Navbar";
 import { AuthProvider } from "./context/AuthContext";
-import LandingPage from "./pages/LandingPage";
+import Login from "./components/Auth/Login";
+import Navbar from "./components/Navbar/Navbar";
+import PrivateRoute from "./components/Auth/PrivateRoute";
 import Profile from "./pages/Profile";
-import QuizHistory from "./components/QuizHistory";
-import QuizDetails from "./components/QuizDetails/QuizDetails";
+import QuizEditorPage from "./pages/QuizEditorPage";
+import LandingPage from "./pages/LandingPage";
+import ResultsPage from "./pages/ResultsPage";
+import SignUp from "./components/Auth/SignUp";
+import PracticePage from "./pages/PracticePage";
 import VerifyEmail from "./pages/VerifyEmail";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
 root.render(
   <React.StrictMode>
     <AuthProvider>
@@ -29,16 +30,12 @@ root.render(
           <BrowserRouter>
             <Navbar />
             <Routes>
-              {/* Landing Page */}
               <Route path="/" element={<LandingPage />} />
-
-              {/* Auth Routes */}
-              <Route path="/signup" element={<SignUp />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/logout" element={<LogoutButton />} />
+              <Route path="/signup" element={<SignUp />} />
               <Route path="/verify" element={<VerifyEmail />} />
-
-              {/* Protected App Route */}
+              <Route path="/practice/:quizId" element={<PracticePage />} />
+              <Route path="/results/:sessionId" element={<ResultsPage />} />
               <Route
                 path="/app"
                 element={
@@ -56,21 +53,14 @@ root.render(
                 }
               />
               <Route
-                path="/quiz-history"
+                path="/quizzes/:quizId/edit"
                 element={
                   <PrivateRoute>
-                    <QuizHistory />
+                    <QuizEditorPage />
                   </PrivateRoute>
                 }
               />
-              <Route
-                path="/quiz-details/:quizId"
-                element={
-                  <PrivateRoute>
-                    <QuizDetails />
-                  </PrivateRoute>
-                }
-              />
+              <Route path="/quiz-history" element={<Navigate to="/app" replace />} />
             </Routes>
           </BrowserRouter>
         </AppProvider>

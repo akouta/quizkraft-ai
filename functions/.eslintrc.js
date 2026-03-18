@@ -4,7 +4,7 @@ module.exports = {
     node: true,
   },
   parserOptions: {
-    ecmaVersion: 2018,
+    ecmaVersion: 2020,
   },
   extends: ["eslint:recommended", "google"],
   rules: {
@@ -14,6 +14,7 @@ module.exports = {
     "quotes": ["error", "double", {allowTemplateLiterals: true}],
     "max-len": ["error", {code: 150}],
     "new-cap": "off",
+    "require-jsdoc": "off",
 
     // Add this line:
     "valid-jsdoc": "off",

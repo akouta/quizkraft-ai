@@ -1,133 +1,91 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
+  Stack,
   TextField,
-  Button,
-  Link as MuiLink,
-  Alert,
+  Typography,
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { loginUser } from "../../firebase/firebaseAuth";
 import GoogleLoginButton from "../GoogleLoginButton/GoogleLoginButton";
-import ThemeToggle from "../ThemeToggle";
-
-// Handle Firebase authentication errors and provide user-friendly messages.
-const handleAuthError = (error) => {
-  const errorMessages = {
-    "auth/user-not-found": "User not found. Please check your email.",
-    "auth/wrong-password": "Incorrect password. Please try again.",
-    "auth/invalid-email": "Invalid email format.",
-  };
-
-  return (
-    errorMessages[error.code] ||
-    "An unexpected error occurred. Please try again later."
-  );
-};
+import { loginUser } from "../../firebase/firebaseAuth";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
 
     try {
-      await loginUser(email, password);
-      navigate("/app");
-    } catch (err) {
-      setError(handleAuthError(err));
+      const user = await loginUser(email, password);
+      navigate(user.emailVerified ? "/app" : "/verify");
+    } catch (loginError) {
+      setError(loginError.message || "Login failed.");
     }
   };
 
   return (
     <Box
       sx={{
+        minHeight: "80vh",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
-        backgroundColor: "background.default",
-        color: "text.primary",
-        padding: 3,
-        textAlign: "center",
+        justifyContent: "center",
+        px: 2,
+        py: 6,
       }}
     >
-      <Card sx={{ maxWidth: 400, width: "100%", boxShadow: 3 }}>
-        <ThemeToggle />
+      <Card sx={{ maxWidth: 440, width: "100%", borderRadius: 4 }}>
         <CardContent>
-          <Typography
-            variant="h4"
-            gutterBottom
-            align="center"
-            sx={{ fontWeight: "bold" }}
-          >
-            Welcome Back!
-          </Typography>
-          <Typography
-            variant="body2"
-            gutterBottom
-            align="center"
-            sx={{ marginBottom: 3 }}
-          >
-            Login to your QuizKraft AI account.
-          </Typography>
-          {error && (
-            <Alert severity="error" sx={{ marginBottom: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit}>
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              fullWidth
-              required
-              margin="normal"
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-              required
-              margin="normal"
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ marginTop: 2, padding: 1 }}
-            >
-              Login
-            </Button>
-          </form>
-          <Typography variant="body2" align="center" sx={{ marginTop: 2 }}>
-            Don’t have an account?{" "}
-            <MuiLink
-              component={RouterLink}
-              to="/signup"
-              color="primary"
-              underline="hover"
-            >
-              Sign Up
-            </MuiLink>
-          </Typography>
-          {/* Google Sign-in Option */}
-          <Typography variant="body1" align="center" sx={{ margin: "20px 0" }}>
-            OR
-          </Typography>
-          <GoogleLoginButton />
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                Return to the teacher studio
+              </Typography>
+              <Typography color="text.secondary">
+                Sign in to continue generating, editing, and publishing source-
+                cited assessments.
+              </Typography>
+            </Box>
+            {error && <Alert severity="error">{error}</Alert>}
+            <form onSubmit={handleSubmit}>
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <Button type="submit" variant="contained" sx={{ borderRadius: 999 }}>
+                  Login
+                </Button>
+              </Stack>
+            </form>
+            <GoogleLoginButton />
+            <Typography color="text.secondary">
+              New here?{" "}
+              <Button component={RouterLink} to="/signup" sx={{ px: 0 }}>
+                Create a free account
+              </Button>
+            </Typography>
+          </Stack>
         </CardContent>
       </Card>
     </Box>

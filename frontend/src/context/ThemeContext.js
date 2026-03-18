@@ -1,41 +1,67 @@
-import React, { createContext, useState, useMemo, useEffect } from "react";
+import React, { createContext, useEffect, useMemo, useState } from "react";
 import { ThemeProvider } from "@mui/material/styles";
-import lightTheme from "./lightTheme";
 import darkTheme from "./darkTheme";
+import lightTheme from "./lightTheme";
 
 export const ThemeModeContext = createContext();
 
+function getStoredMode() {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+
+  return localStorage.getItem("themeMode") || "system";
+}
+
+function getResolvedSystemMode() {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    return "dark";
+  }
+
+  return "light";
+}
+
 export function ThemeContextProvider({ children }) {
-  const [mode, setMode] = useState("system");
+  const [mode, setMode] = useState(getStoredMode);
+  const resolvedMode = mode === "system" ? getResolvedSystemMode() : mode;
 
   useEffect(() => {
-    if (mode === "system") {
-      const systemPrefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      setMode(systemPrefersDark ? "dark" : "light");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("themeMode", mode);
     }
   }, [mode]);
 
-  const toggleTheme = (newMode) => {
-    setMode(newMode);
-    if (newMode !== "system") {
-      localStorage.setItem("themeMode", newMode); // Persist user choice
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
     }
-  };
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => {
+      if (mode === "system") {
+        setMode("system");
+      }
+    };
+
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, [mode]);
 
   const theme = useMemo(() => {
-    if (mode === "system") {
-      const systemPrefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      return systemPrefersDark ? darkTheme : lightTheme;
-    }
-    return mode === "dark" ? darkTheme : lightTheme;
-  }, [mode]);
+    return resolvedMode === "dark" ? darkTheme : lightTheme;
+  }, [resolvedMode]);
 
   return (
-    <ThemeModeContext.Provider value={{ mode, toggleTheme }}>
+    <ThemeModeContext.Provider
+      value={{
+        mode,
+        resolvedMode,
+        toggleTheme: setMode,
+      }}
+    >
       <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </ThemeModeContext.Provider>
   );

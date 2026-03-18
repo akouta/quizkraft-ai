@@ -1,150 +1,86 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { AppBar, Box, Button, Stack, Toolbar, Typography } from "@mui/material";
+import ThemeToggle from "../ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
-import {
-  Box,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
 import LogoutButton from "../Auth/LogoutButton";
 
 function Navbar() {
-  const { currentUser } = useAuth();
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = (open) => () => {
-    setSidebarOpen(open);
-  };
+  const { currentUser, isVerified } = useAuth();
 
   return (
-    <Box
-      className="navbar"
+    <AppBar
+      position="sticky"
+      elevation={0}
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 20px",
-        backgroundColor: "background.default",
-        color: "text.primary",
+        backdropFilter: "blur(20px)",
+        backgroundColor: "rgba(10, 25, 47, 0.82)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {/* App Title */}
-      <Box
-        component={Link}
-        to="/"
-        sx={{
-          fontWeight: "bold",
-          fontSize: "1.5rem",
-          textDecoration: "none",
-          color: "inherit",
-          "&:hover": {
-            textDecoration: "none",
-          },
-        }}
-      >
-        QuizKraft AI
-      </Box>
-
-      {/* Hamburger Menu Button */}
-      <IconButton
-        edge="start"
-        color="inherit"
-        aria-label="menu"
-        onClick={toggleSidebar(true)}
-      >
-        <MenuIcon />
-      </IconButton>
-
-      {/* Sidebar Drawer */}
-      <Drawer
-        anchor="right"
-        open={isSidebarOpen}
-        onClose={toggleSidebar(false)}
-      >
+      <Toolbar sx={{ justifyContent: "space-between", gap: 2 }}>
         <Box
-          sx={{
-            width: 250,
-            backgroundColor: "background.default",
-            height: "100%",
-            padding: 2,
-          }}
-          role="presentation"
+          component={RouterLink}
+          to="/"
+          sx={{ textDecoration: "none", color: "inherit" }}
         >
-          <List>
-            <ListItem
-              button
-              component={Link}
-              to="/"
-              onClick={toggleSidebar(false)}
-            >
-              <ListItemText
-                primary="QuizKraft AI"
-                primaryTypographyProps={{
-                  fontWeight: "bold",
-                  fontSize: "1.5rem",
-                }}
-              />
-            </ListItem>
-            <Divider />
-            {currentUser ? (
-              <>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/profile"
-                  onClick={toggleSidebar(false)}
-                >
-                  <ListItemText primary="Profile" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/app"
-                  onClick={toggleSidebar(false)}
-                >
-                  <ListItemText primary="Generate Quiz" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/quiz-history"
-                  onClick={toggleSidebar(false)}
-                >
-                  <ListItemText primary="Quiz History" />
-                </ListItem>
-                <ListItem onClick={toggleSidebar(false)}>
-                  <LogoutButton />
-                </ListItem>
-              </>
-            ) : (
-              <>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/login"
-                  onClick={toggleSidebar(false)}
-                >
-                  <ListItemText primary="Login" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/signup"
-                  onClick={toggleSidebar(false)}
-                >
-                  <ListItemText primary="Sign Up" />
-                </ListItem>
-              </>
-            )}
-          </List>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, letterSpacing: 0.4 }}
+          >
+            QuizKraft
+          </Typography>
         </Box>
-      </Drawer>
-    </Box>
+
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <ThemeToggle />
+          {currentUser ? (
+            <>
+              {isVerified && (
+                <>
+                  <Button color="inherit" component={RouterLink} to="/app">
+                    Workspace
+                  </Button>
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/profile"
+                  >
+                    Profile
+                  </Button>
+                </>
+              )}
+              {!isVerified && (
+                <Button color="inherit" component={RouterLink} to="/verify">
+                  Verify email
+                </Button>
+              )}
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Button color="inherit" component={RouterLink} to="/login">
+                Login
+              </Button>
+              <Button
+                variant="contained"
+                component={RouterLink}
+                to="/signup"
+                sx={{
+                  borderRadius: 999,
+                  px: 2,
+                  backgroundColor: "#f59e0b",
+                  color: "#111827",
+                  "&:hover": { backgroundColor: "#fbbf24" },
+                }}
+              >
+                Start free
+              </Button>
+            </>
+          )}
+        </Stack>
+      </Toolbar>
+    </AppBar>
   );
 }
 

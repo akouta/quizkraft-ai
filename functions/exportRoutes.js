@@ -1,248 +1,199 @@
-// exportRoutes.js – Word/PDF export routes with docx, pdfkit
-
-const express = require("express");
-// Removed unused 'cors', 'fs', 'path'
-const { Document, Packer, Paragraph, HeadingLevel } = require("docx");
+const {Document, Packer, Paragraph, HeadingLevel} = require("docx");
 const PDFDocument = require("pdfkit");
 
-/**
- * Creates an Express router that handles /export-quiz/word and /export-quiz/pdf
- * Lint rule 'new-cap' is disabled around docx usage if needed.
- */
-function createExportRouter() {
-  const router = express.Router();
+function getQuestionLabel(question, index) {
+  if (question.type === "exam_problem") {
+    return `Problem ${index + 1}`;
+  }
 
-  // Word Export
-  router.post("/word", async (req, res) => {
-    const data = req.body;
-    const quiz = data.quiz;
-    const includeAnswers = data.include_answers || false;
-
-    if (!quiz) {
-      return res.status(400).json({ error: "No quiz to export" });
-    }
-
-    try {
-      /* eslint-disable new-cap */
-      const doc = new Document({
-        sections: [
-          {
-            children: [
-              new Paragraph({
-                text: "Generated Quiz",
-                heading: HeadingLevel.TITLE,
-              }),
-              new Paragraph({ text: "" }),
-              new Paragraph({
-                text: "Multiple-Choice Questions",
-                heading: HeadingLevel.HEADING_2,
-              }),
-              ...(quiz.multiple_choice || [])
-                .map((question, i) => {
-                  return [
-                    new Paragraph(`Q${i + 1}: ${question.question}`),
-                    ...question.options.map(
-                      (option, j) =>
-                        new Paragraph({
-                          text: `${String.fromCharCode(65 + j)}. ${option}`,
-                          bullet: { level: 0 },
-                        })
-                    ),
-                  ];
-                })
-                .flat(),
-              new Paragraph({
-                text: "Short-Answer Questions",
-                heading: HeadingLevel.HEADING_2,
-              }),
-              ...(quiz.short_answer || []).map(
-                (question, i) =>
-                  new Paragraph(`Q${i + 1}: ${question.question}`)
-              ),
-              new Paragraph({
-                text: "Exam Problems",
-                heading: HeadingLevel.HEADING_2,
-              }),
-              ...(quiz.exam_problem || []).map(
-                (question, i) =>
-                  new Paragraph(`Q${i + 1}: ${question.question}`)
-              ),
-            ],
-          },
-          ...(includeAnswers
-            ? [
-                {
-                  children: [
-                    new Paragraph({ text: "", spacing: { before: 300 } }),
-                    new Paragraph({
-                      text: "Answers",
-                      heading: HeadingLevel.TITLE,
-                    }),
-                    new Paragraph({
-                      text: "Multiple-Choice Answers",
-                      heading: HeadingLevel.HEADING_2,
-                    }),
-                    ...(quiz.multiple_choice || []).map(
-                      (q, i) =>
-                        new Paragraph(`Q${i + 1} Answer: ${q.correct_answer}`)
-                    ),
-                    new Paragraph({
-                      text: "Short-Answer Solutions",
-                      heading: HeadingLevel.HEADING_2,
-                    }),
-                    ...(quiz.short_answer || []).map(
-                      (q, i) =>
-                        new Paragraph(
-                          `Q${i + 1}: ${q.answer || "No answer provided"}`
-                        )
-                    ),
-                    new Paragraph({
-                      text: "Exam Problem Solutions",
-                      heading: HeadingLevel.HEADING_2,
-                    }),
-                    ...(quiz.exam_problem || []).map(
-                      (q, i) =>
-                        new Paragraph(
-                          `Q${i + 1}: ${q.solution || "No solution provided"}`
-                        )
-                    ),
-                  ],
-                },
-              ]
-            : []),
-        ],
-      });
-      /* eslint-enable new-cap */
-
-      const buffer = await Packer.toBuffer(doc);
-      const filename = includeAnswers
-        ? "quiz_with_answers.docx"
-        : "quiz_without_answers.docx";
-
-      // Return the buffer as an attachment
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`
-      );
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      );
-      return res.send(Buffer.from(buffer));
-    } catch (err) {
-      return res.status(500).json({ error: "Failed to export Word document" });
-    }
-  });
-
-  // PDF Export
-  router.post("/pdf", async (req, res) => {
-    const data = req.body;
-    const quiz = data.quiz;
-    const includeAnswers = data.include_answers || false;
-
-    if (!quiz) return res.status(400).json({ error: "No quiz to export" });
-
-    try {
-      const doc = new PDFDocument();
-      const buffers = [];
-
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", () => {
-        const pdfData = Buffer.concat(buffers);
-        const filename = includeAnswers
-          ? "quiz_with_answers.pdf"
-          : "quiz_without_answers.pdf";
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename=${filename}`
-        );
-        return res.send(pdfData);
-      });
-
-      doc.fontSize(20).text("Generated Quiz", { align: "center" });
-      doc.moveDown();
-
-      // Multiple-Choice
-      if (quiz.multiple_choice && quiz.multiple_choice.length) {
-        doc.fontSize(16).text("Multiple-Choice Questions", { underline: true });
-        quiz.multiple_choice.forEach((q, i) => {
-          doc.moveDown(0.5);
-          doc.fontSize(12).text(`Q${i + 1}: ${q.question}`);
-          q.options.forEach((option, j) => {
-            doc.text(`${String.fromCharCode(65 + j)}. ${option}`, {
-              indent: 20,
-            });
-          });
-        });
-        doc.moveDown();
-      }
-
-      // Short-Answer
-      if (quiz.short_answer && quiz.short_answer.length) {
-        doc.fontSize(16).text("Short-Answer Questions", { underline: true });
-        quiz.short_answer.forEach((q, i) => {
-          doc.moveDown(0.5);
-          doc.fontSize(12).text(`Q${i + 1}: ${q.question}`);
-        });
-        doc.moveDown();
-      }
-
-      // Exam Problems
-      if (quiz.exam_problem && quiz.exam_problem.length) {
-        doc.fontSize(16).text("Exam Problems", { underline: true });
-        quiz.exam_problem.forEach((q, i) => {
-          doc.moveDown(0.5);
-          doc.fontSize(12).text(`Q${i + 1}: ${q.question}`);
-        });
-        doc.moveDown();
-      }
-
-      // Answers if requested
-      if (includeAnswers) {
-        doc.addPage();
-        doc.fontSize(20).text("Answers", { align: "center" });
-        doc.moveDown();
-
-        if (quiz.multiple_choice && quiz.multiple_choice.length) {
-          doc.fontSize(16).text("Multiple-Choice Answers", { underline: true });
-          quiz.multiple_choice.forEach((q, i) => {
-            doc.moveDown(0.5);
-            doc.fontSize(12).text(`Q${i + 1} Answer: ${q.correct_answer}`);
-          });
-          doc.moveDown();
-        }
-
-        if (quiz.short_answer && quiz.short_answer.length) {
-          doc.fontSize(16).text("Short-Answer Solutions", { underline: true });
-          quiz.short_answer.forEach((q, i) => {
-            doc.moveDown(0.5);
-            doc
-              .fontSize(12)
-              .text(`Q${i + 1}: ${q.answer || "No answer provided"}`);
-          });
-          doc.moveDown();
-        }
-
-        if (quiz.exam_problem && quiz.exam_problem.length) {
-          doc.fontSize(16).text("Exam Problem Solutions", { underline: true });
-          quiz.exam_problem.forEach((q, i) => {
-            doc.moveDown(0.5);
-            doc
-              .fontSize(12)
-              .text(`Q${i + 1}: ${q.solution || "No solution provided"}`);
-          });
-          doc.moveDown();
-        }
-      }
-
-      doc.end();
-    } catch (err) {
-      return res.status(500).json({ error: "Failed to generate PDF" });
-    }
-  });
-
-  return router;
+  return `Question ${index + 1}`;
 }
 
-module.exports = { createExportRouter };
+function buildDocxParagraphs(quiz, includeAnswers) {
+  const questions = (quiz.questions || []).filter((question) => question.enabled !== false);
+
+  return [
+    new Paragraph({
+      text: quiz.title || "Generated Assessment Pack",
+      heading: HeadingLevel.TITLE,
+    }),
+    new Paragraph({
+      text: `${quiz.subject || "STEM"} | ${quiz.difficulty || "medium"}`,
+    }),
+    new Paragraph({text: ""}),
+    ...questions.flatMap((question, index) => {
+      const children = [
+        new Paragraph({
+          text: `${getQuestionLabel(question, index)}: ${question.prompt}`,
+        }),
+      ];
+
+      (question.options || []).forEach((option, optionIndex) => {
+        children.push(new Paragraph({
+          text: `${String.fromCharCode(65 + optionIndex)}. ${option}`,
+          bullet: {level: 0},
+        }));
+      });
+
+      if (includeAnswers) {
+        children.push(new Paragraph({
+          text: `Answer: ${question.correctAnswer || "Not provided"}`,
+        }));
+        children.push(new Paragraph({
+          text: `Explanation: ${question.explanation || "Not provided"}`,
+        }));
+      }
+
+      return children.concat(new Paragraph({text: ""}));
+    }),
+  ];
+}
+
+async function buildWordBuffer(quiz, includeAnswers) {
+  const doc = new Document({
+    sections: [{
+      children: buildDocxParagraphs(quiz, includeAnswers),
+    }],
+  });
+
+  return Packer.toBuffer(doc);
+}
+
+function writeQuestionToPdf(doc, question, index, includeAnswers) {
+  doc.fontSize(12).text(
+      `${getQuestionLabel(question, index)}: ${question.prompt}`,
+  );
+
+  (question.options || []).forEach((option, optionIndex) => {
+    doc.text(`${String.fromCharCode(65 + optionIndex)}. ${option}`, {
+      indent: 18,
+    });
+  });
+
+  doc.text(`Topic: ${question.topic || "General"}`, {indent: 0});
+
+  if (includeAnswers) {
+    doc.text(`Answer: ${question.correctAnswer || "Not provided"}`);
+    doc.text(`Explanation: ${question.explanation || "Not provided"}`);
+  }
+
+  if (Array.isArray(question.sourceRefs) && question.sourceRefs.length) {
+    const citationText = question.sourceRefs
+        .map((ref) => `p.${ref.page}: ${ref.snippet}`)
+        .join(" | ");
+    doc.text(`Source: ${citationText}`);
+  }
+
+  doc.moveDown();
+}
+
+async function buildPdfBuffer(quiz, includeAnswers) {
+  return await new Promise((resolve, reject) => {
+    const doc = new PDFDocument({margin: 48});
+    const buffers = [];
+
+    doc.on("data", (chunk) => buffers.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", reject);
+
+    doc.fontSize(20).text(quiz.title || "Generated Assessment Pack", {
+      align: "center",
+    });
+    doc.moveDown(0.5);
+    doc.fontSize(11).text(
+        `${quiz.subject || "STEM"} | ${quiz.difficulty || "medium"}`,
+        {align: "center"},
+    );
+    doc.moveDown();
+
+    (quiz.questions || [])
+        .filter((question) => question.enabled !== false)
+        .forEach((question, index) => {
+          writeQuestionToPdf(doc, question, index, includeAnswers);
+        });
+
+    doc.end();
+  });
+}
+
+function escapeXml(value = "") {
+  return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+}
+
+function buildChoiceInteraction(question, index) {
+  const options = (question.options || []).map((option, optionIndex) => {
+    return `
+      <simpleChoice identifier="choice_${index}_${optionIndex}">
+        ${escapeXml(option)}
+      </simpleChoice>`;
+  }).join("");
+
+  const correctIndex = (question.options || []).findIndex((option) => {
+    return option === question.correctAnswer;
+  });
+
+  return `
+    <assessmentItem identifier="${escapeXml(question.id)}" title="${
+  escapeXml(question.prompt)
+}" adaptive="false" timeDependent="false">
+      <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+        <correctResponse>
+          <value>choice_${index}_${Math.max(correctIndex, 0)}</value>
+        </correctResponse>
+      </responseDeclaration>
+      <itemBody>
+        <p>${escapeXml(question.prompt)}</p>
+        <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="1">
+          ${options}
+        </choiceInteraction>
+      </itemBody>
+    </assessmentItem>`;
+}
+
+function buildTextInteraction(question) {
+  return `
+    <assessmentItem identifier="${escapeXml(question.id)}" title="${
+  escapeXml(question.prompt)
+}" adaptive="false" timeDependent="false">
+      <itemBody>
+        <p>${escapeXml(question.prompt)}</p>
+        <extendedTextInteraction responseIdentifier="RESPONSE" expectedLines="6"/>
+      </itemBody>
+      <modalFeedback identifier="feedback" outcomeIdentifier="FEEDBACK" showHide="show">
+        ${escapeXml(question.correctAnswer || "")}
+      </modalFeedback>
+    </assessmentItem>`;
+}
+
+function buildQtiXml(quiz) {
+  const items = (quiz.questions || [])
+      .filter((question) => question.enabled !== false)
+      .map((question, index) => {
+        if (question.type === "multiple_choice") {
+          return buildChoiceInteraction(question, index);
+        }
+
+        return buildTextInteraction(question);
+      })
+      .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<assessmentPackage xmlns="http://www.imsglobal.org/xsd/qti/imsqti_v2p1">
+  <metadata>
+    <title>${escapeXml(quiz.title || "Generated Assessment Pack")}</title>
+    <subject>${escapeXml(quiz.subject || "STEM")}</subject>
+  </metadata>
+  ${items}
+</assessmentPackage>`;
+}
+
+module.exports = {
+  buildPdfBuffer,
+  buildQtiXml,
+  buildWordBuffer,
+};

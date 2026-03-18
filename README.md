@@ -1,139 +1,98 @@
-# 🚀 QuizKraft AI
+# QuizKraft AI
 
-**QuizKraft AI** allows users to effortlessly generate quizzes from **lecture screenshots** or **PDF files**. The app provides flexible export options, allowing users to save quizzes as **PDF** or **Word documents**, with or without answers. Users can customize the number of questions per type and adjust the difficulty level (**Easy, Medium, or Hard**).
+QuizKraft is now structured as a no-spend STEM assessment studio:
 
-### ✅ Supported Question Types:
+- The browser handles PDF parsing, image OCR, draft generation, and export.
+- Firebase Hosting, Authentication, and Firestore are the only runtime Firebase services in the app path.
+- Cloud Functions and Cloud Storage are no longer required for the core workflow.
 
-- **Multiple-Choice**
-- **Short-Answer**
-- **Exam Problem**
+## Product flow
 
----
+1. Sign in as a verified teacher.
+2. Select a lecture PDF or screenshot in the workspace.
+3. The browser extracts text locally and builds a source-cited assessment draft.
+4. Save, edit, publish, practice, and export from the React app.
 
-## 🌐 Deployment (Firebase)
+The original source file is not uploaded. Only quiz jobs, generated artifacts, published quiz snapshots, and practice results are written to Firestore.
 
-**QuizKraft AI** is hosted on **Firebase**, leveraging several services for seamless functionality:
+## No-spend architecture
 
-- **Hosting**: Serves the built **React** frontend.
-- **Cloud Functions**: Handles **OCR** and **quiz generation** logic.
-- **Firestore & Storage**: Manages user data and uploaded files.
-- **Authentication**: Supports user **sign-up, login, and email verification**.
+This repo is intended to stay on Firebase Spark-compatible surfaces:
 
-### 🔧 Manual Deployment Steps
+- Firebase Hosting
+- Firebase Authentication
+- Cloud Firestore
 
-1. **Clone the Repository & Install Dependencies**
+The deploy config in [firebase.json](/Users/SONY/quizkraft-ai/firebase.json) no longer deploys Functions or Storage.
 
-   ```bash
-   git clone https://github.com/akouta/quizkraft-ai.git
-   cd quizkraft-ai/frontend
-   npm install
-   npm run build
-   ```
+## Local development
 
-2. **Setup Firebase Functions**
+### Frontend
 
-   ```bash
-   cd quizkraft-ai/functions
-   npm install
-   ```
+```bash
+cd frontend
+npm install
+npm start
+```
 
-3. **Configure Environment Variables**
+### Required frontend environment variables
 
-   - Create an `.env` file in both the **frontend** and **functions** directories.
+Create `frontend/.env`:
 
-   **Frontend `.env` Example:**
+```bash
+REACT_APP_FIREBASE_API_KEY="your-api-key"
+REACT_APP_FIREBASE_AUTH_DOMAIN="your-auth-domain"
+REACT_APP_FIREBASE_PROJECT_ID="your-project-id"
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID="your-messaging-sender-id"
+REACT_APP_FIREBASE_APP_ID="your-app-id"
+REACT_APP_FIREBASE_MEASUREMENT_ID="your-measurement-id"
+REACT_APP_QUIZ_PROVIDER="local"
+```
 
-   ```bash
-   REACT_APP_FIREBASE_API_KEY="your-api-key"
-   REACT_APP_FIREBASE_AUTH_DOMAIN="your-auth-domain"
-   REACT_APP_FIREBASE_PROJECT_ID="your-project-id"
-   REACT_APP_FIREBASE_STORAGE_BUCKET="your-storage-bucket"
-   REACT_APP_FIREBASE_MESSAGING_SENDER_ID="your-messaging-sender-id"
-   REACT_APP_FIREBASE_APP_ID="your-app-id"
-   REACT_APP_FUNCTION_URL=https://your-cloud-function-url
-   ```
+`REACT_APP_FIREBASE_STORAGE_BUCKET` and `REACT_APP_FUNCTION_URL` are no longer needed for the core app path.
 
-   **Functions `.env` Example:**
+## Provider boundary
 
-   ```bash
-   OPENAI_API_KEY="your-openai-api-key"
-   ```
+The frontend now talks to a provider boundary in [frontend/src/api/quizApi.js](/Users/SONY/quizkraft-ai/frontend/src/api/quizApi.js).
 
-   > ⚠️ **Important:** Never commit `.env` files. Ensure they are in `.gitignore`.
+- `local` mode uses [localQuizProvider.js](/Users/SONY/quizkraft-ai/frontend/src/api/providers/localQuizProvider.js)
+- `server` mode uses [serverQuizProvider.js](/Users/SONY/quizkraft-ai/frontend/src/api/providers/serverQuizProvider.js)
 
-4. **Set Up Firebase Configuration**
+`local` is the default. To move back to a backend later:
 
-   - Copy the example Firebase config:
+1. Set `REACT_APP_QUIZ_PROVIDER="server"`.
+2. Set `REACT_APP_FUNCTION_URL` to your backend base URL.
+3. Reintroduce the backend endpoints without changing the React screens.
 
-   ```bash
-   cp .firebaserc.example .firebaserc
-   ```
+The UI pages call `quizApi` only, so the migration surface is now the provider layer instead of the entire app.
 
-   - Replace the project ID in `.firebaserc`:
+## Deploy
 
-   ```json
-   {
-     "projects": {
-       "default": "your-firebase-project-id"
-     }
-   }
-   ```
+Build the frontend and deploy only Spark-safe surfaces:
 
-5. **Deploy to Firebase**
+```bash
+cd frontend
+npm run build
+cd ..
+firebase deploy --only hosting,firestore
+```
 
-   ```bash
-   firebase deploy --only hosting,functions,firestore,storage
-   ```
+## Current capabilities
 
-   - Ensure `firebase.json` and `.firebaserc` are correctly configured.
-   - If using CI/CD (e.g., GitHub Actions), confirm **Firebase tokens or service accounts** are set up for automatic deployments.
+- Browser-side PDF parsing
+- Browser-side image OCR
+- Source-cited quiz, flashcard, and study-guide drafting
+- Teacher review and publish flow
+- Public practice mode
+- Teacher results summary
+- PDF, Word, and QTI export generated in the browser
 
----
+## Tradeoffs
 
-## 🛣️ Roadmap
+- Quiz generation quality is heuristic, not model-based.
+- Public practice grading is client-side, so this is suitable for study and low-stakes assessment, not secure testing.
+- Practice results are stored in Firestore, but original files are not.
 
-We aim to make **QuizKraft AI** a **comprehensive tool for educators**. Here’s what’s coming next:
+## License
 
-### 🎯 Short-Term Goals (1-2 Months)
-
-- **UI/UX Enhancements**:
-  - Improved layout and **progress bars** for uploads & quiz generation.
-  - Enhanced **table and image extraction** from PDFs.
-- **Performance Boost**:
-  - Optimize **OCR & PDF processing** using parallelism and serverless functions.
-
-### 📈 Medium-Term Goals (3-6 Months)
-
-- **Interactive Quiz Mode**:
-  - Users can **take quizzes online with auto-grading**.
-- **Content Insights**:
-  - Provide detailed **quiz coverage & alignment analytics**.
-- **Math Parsing Enhancements**:
-  - Improve handling of **LaTeX equations and diagrams**.
-
-### 🚀 Long-Term Goals (6-12 Months)
-
-- **Multi-Language Support**:
-  - Generate quizzes in **multiple languages**.
-- **LMS Integration**:
-  - Export quizzes to platforms like **Moodle or Canvas**.
-- **Gamification**:
-  - Add **badges, leaderboards, and scoring systems**.
-- **Subscription Tiers**:
-  - Introduce **Freemium, Premium, Pro, and Enterprise plans**.
-  - Implement **Stripe integration** for seamless payments & subscription management.
-
-### ✅ Completed Features
-
-- Generate quizzes from **PDFs & lecture screenshots**.
-- Export quizzes as **PDF/Word** (with or without answers).
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for more details.
-
----
-
-Enjoy using **QuizKraft AI**! 🚀 Have suggestions or feedback? Feel free to **open an issue or submit a pull request**. 🤝
+MIT. See [LICENSE](/Users/SONY/quizkraft-ai/LICENSE).

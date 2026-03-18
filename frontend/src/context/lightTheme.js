@@ -3,29 +3,31 @@ import { createTheme } from "@mui/material/styles";
 const lightTheme = createTheme({
   palette: {
     mode: "light",
-    background: {
-      default: "#f5f5f5", // Light gray background
-      paper: "#ffffff", // White for cards and containers
-    },
-    text: {
-      primary: "#000000", // Black text for light mode
-      secondary: "#555555", // Dark gray secondary text
-    },
     primary: {
-      main: "#1976D2", // Accent color for buttons, links, etc.
+      main: "#0b4e7d",
     },
     secondary: {
-      main: "#DC004E",
+      main: "#f59e0b",
     },
-    divider: "#E0E0E0", // Divider color
+    background: {
+      default: "#f3f7fb",
+      paper: "#ffffff",
+    },
+    text: {
+      primary: "#111827",
+      secondary: "#475569",
+    },
+  },
+  shape: {
+    borderRadius: 20,
   },
   typography: {
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
-    body1: {
-      color: "#333333", // Default text
+    fontFamily: '"Avenir Next", "Segoe UI", sans-serif',
+    h2: {
+      letterSpacing: "-0.04em",
     },
-    body2: {
-      color: "#666666", // Secondary text
+    h3: {
+      letterSpacing: "-0.03em",
     },
   },
 });

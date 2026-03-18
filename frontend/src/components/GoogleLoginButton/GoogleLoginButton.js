@@ -1,4 +1,3 @@
-// GoogleLoginButton.js
 import React from "react";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@mui/material";
@@ -7,20 +6,13 @@ import { useNavigate } from "react-router-dom";
 
 function GoogleLoginButton() {
   const navigate = useNavigate();
+
   const handleGoogleSignIn = async () => {
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+
     try {
-      const auth = getAuth();
-      const provider = new GoogleAuthProvider();
-
-      const result = await signInWithPopup(auth, provider);
-      // This gives you a Google Access Token. You can use it to access Google APIs.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
-
-      // The signed-in user info:
-      const user = result.user;
-
-      // If you need to do something post-sign-in, do it here:
+      await signInWithPopup(auth, provider);
       navigate("/app");
     } catch (error) {
       alert("Google sign-in failed. Please try again.");
@@ -29,13 +21,13 @@ function GoogleLoginButton() {
 
   return (
     <Button
-      variant="contained"
-      color="primary"
+      variant="outlined"
       onClick={handleGoogleSignIn}
       startIcon={<GoogleIcon />}
       fullWidth
+      sx={{ borderRadius: 999 }}
     >
-      Sign in with Google
+      Continue with Google
     </Button>
   );
 }

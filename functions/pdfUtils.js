@@ -26,7 +26,7 @@ async function extractPages(fileBuffer, pageIndices) {
   }
 
   // 4) Save subset to a buffer
-  return await newPdf.save();
+  return Buffer.from(await newPdf.save());
 }
 
 module.exports = {extractPages};
